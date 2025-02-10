@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy Booking Project
 
 on:
   push:
@@ -6,47 +6,33 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Check out the code
+      uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
+    - name: Set up Docker
       uses: docker/setup-buildx-action@v2
 
-    - name: Cache Docker layers
-      uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Log in to DockerHub
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
     - name: Build Docker image
-      run: |
-        docker build -t eremark/booking-project .
+      run: docker build -t sidannlev/booking-project:latest .
 
-    - name: Push Docker image to DockerHub
-      run: |
-        docker push eremark/booking-project
+    - name: Push Docker image
+      run: docker push sidannlev/booking-project:latest
 
-    - name: SSH to EC2 and deploy the app
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        private-key: ${{ secrets.EC2_PRIVATE_KEY }}
-        port: ${{ secrets.EC2_PORT }}
-        script: |
-          docker pull eremark/booking-project
-          docker stop booking-container || true
-          docker rm booking-container || true
-          docker run -d -p 80:80 --name booking-container eremark/booking-project
+    - name: Deploy the container on AWS
+      run: |
+        ssh -o StrictHostKeyChecking=no ec2-user@<YOUR_EC2_PUBLIC_IP> << EOF
+        docker pull sidannlev/booking-project:latest
+        docker stop booking-container || true
+        docker rm booking-container || true
+        docker run -d --name booking-container -p 80:80 sidannlev/booking-project:latest
+        EOF
