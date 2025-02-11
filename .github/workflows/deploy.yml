@@ -36,3 +36,19 @@ jobs:
         docker rm booking-container || true
         docker run -d --name booking-container -p 80:80 sidannlev/booking-project:latest
         EOF
+
+        jobs:
+        build_and_scan:
+        runs-on: ubuntu-latest
+
+          steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+ 
+        - name: Build Docker image
+         run: docker build -t my-image .
+
+        - name: Scan Docker image for vulnerabilities with Trivy
+        run: |
+          curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.29.0/trivy_0.29.0_Linux-x86_64.tar.gz | tar xz -C /usr/local/bin
+          trivy image my-image
