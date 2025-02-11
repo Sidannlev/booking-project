@@ -23,3 +23,10 @@ jobs:
         run: |
           docker pull aquasec/trivy:latest
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image booking-project:latest
+
+          - name: Scan for vulnerabilities
+           run: |
+          docker pull aquasec/trivy
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image eremark/booking-project:latest
+
