@@ -1,1 +1,2 @@
 .ssh/
+.cache/trivy/db/trivy.db
