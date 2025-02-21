@@ -1,0 +1,37 @@
+name: Security Scan and Notification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Run Trivy Scan
+      run: |
+        docker run --rm -v /tmp:/tmp aquasec/trivy image --severity HIGH,CRITICAL --no-progress --format json --output /tmp/trivy-report.json eremark/booking-project
+        cat /tmp/trivy-report.json
+
+    - name: Send Email Notification
+      if: failure()  # Отправить письмо, если сканирование не прошло успешно
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        to: recipient@example.com  # Замените на настоящий адрес получателя
+        subject: "Trivy Scan Results - Failure"
+        body: |
+          The security scan has found issues with high or critical vulnerabilities in the image.
+          Please check the scan report for more details: /tmp/trivy-report.json
