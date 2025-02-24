@@ -1,12 +1,5 @@
 version: '3'
 services:
-  web:
-    image: eremark/booking-website
-    container_name: booking-project_web_1
-    ports:
-      - "80:80"
-    networks:
-      - monitoring
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -16,6 +9,7 @@ services:
       - "9090:9090"
     networks:
       - monitoring
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -25,6 +19,15 @@ services:
       - "3000:3000"
     networks:
       - monitoring
+
+  web:
+    image: eremark/booking-website
+    container_name: booking-project_web_1
+    ports:
+      - "80:80"
+    networks:
+      - monitoring
+
 networks:
   monitoring:
     driver: bridge
