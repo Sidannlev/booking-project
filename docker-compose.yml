@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    image: eremark/booking-website
+    ports:
+      - "80:80"
+    networks:
+      - booking-network
+
+networks:
+  booking-network:
+    driver: bridge

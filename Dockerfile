@@ -1,15 +1,17 @@
-# Базовый образ
-FROM debian:12.9
+FROM nginx:latest
 
-# Установим необходимые пакеты для мониторинга
-RUN apt-get update && apt-get install -y \
-    procps \
-    curl \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
+# Копируем файлы сайта в директорию Nginx
+COPY ./ /usr/share/nginx/html
 
-# Установим команду мониторинга (например, htop для мониторинга процессов)
-RUN apt-get install -y htop
+# Установка необходимых утилит
+RUN apt-get update && apt-get install -y curl htop && rm -rf /var/lib/apt/lists/*
 
-# По умолчанию при запуске контейнера будем запускать htop
-CMD ["htop"]
+# Установка Trivy для сканирования уязвимостей
+RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.29.0/trivy_0.29.0_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin trivy
+
+# Выполняем сканирование образа на уязвимости
+RUN trivy image eremark/booking-docker || true
+
+# Определяем команду запуска: сначала мониторинг, потом сервер
+CMD ["sh", "-c", "htop & nginx -g 'daemon off;'"]
+
