@@ -1,0 +1,25 @@
+name: Build and scan Docker image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Docker image
+      run: |
+        docker build -t eremark/booking-project .
+
+    - name: Scan Docker image with Trivy
+      run: |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest --no-progress --exit-code 1 --severity HIGH,CRITICAL eremark/booking-project
