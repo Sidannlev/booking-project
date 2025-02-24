@@ -1,13 +1,30 @@
-version: '3.8'
-
+version: '3'
 services:
   web:
     image: eremark/booking-website
+    container_name: booking-project_web_1
     ports:
       - "80:80"
     networks:
-      - booking-network
-
+      - monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
 networks:
-  booking-network:
+  monitoring:
     driver: bridge
