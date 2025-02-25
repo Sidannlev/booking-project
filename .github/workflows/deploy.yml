@@ -1,22 +1,4 @@
-name: Deploy to AWS EC2  
-# Пример разрешения конфликта
 name: Deploy to AWS EC2
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Deploy to EC2
-        run: |
-          # ваш код для деплоя на EC2
-
 
 on:
   push:
@@ -60,3 +42,4 @@ jobs:
           cd /home/ec2-user/your_project_folder
           # Запускаем контейнер или приложение
           docker-compose up -d
+        EOF
