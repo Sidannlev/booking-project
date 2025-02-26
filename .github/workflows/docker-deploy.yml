@@ -22,5 +22,13 @@ jobs:
     - name: Build Docker Image
       run: docker build -t your-dockerhub-username/booking-website:latest .
 
+    - name: Scan Docker Image for Vulnerabilities with Trivy
+      run: |
+        # Установим Trivy
+        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.39.0/trivy_0.39.0_Linux-64bit.tar.gz | tar xz -C /usr/local/bin
+
+        # Сканируем на уязвимости
+        trivy image your-dockerhub-username/booking-website:latest
+
     - name: Push Docker Image to DockerHub
       run: docker push your-dockerhub-username/booking-website:latest
