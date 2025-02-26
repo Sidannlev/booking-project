@@ -1,0 +1,45 @@
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Log in to DockerHub
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+    - name: Build Docker Image
+      run: docker build -t your-dockerhub-username/booking-website:latest .
+
+    - name: Scan Docker Image for Vulnerabilities with Trivy
+      run: |
+        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.39.0/trivy_0.39.0_Linux-64bit.tar.gz | tar xz -C /usr/local/bin
+        trivy image your-dockerhub-username/booking-website:latest
+
+    - name: Push Docker Image to DockerHub
+      run: docker push your-dockerhub-username/booking-website:latest
+
+    - name: Deploy to Server via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ec2-user
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          cd /path/to/your/deployment/directory
+          docker pull your-dockerhub-username/booking-website:latest
+          docker stop your-container-name || true
+          docker rm your-container-name || true
+          docker run -d --name your-container-name -p 80:80 your-dockerhub-username/booking-website:latest
