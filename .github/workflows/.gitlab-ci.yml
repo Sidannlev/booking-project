@@ -5,25 +5,20 @@
 
  build:
   stage: build
-  script:
+  script: 
     - docker build -t eremark/booking-docker .
     - docker push eremark/booking-docker
 
  scan:
   stage: scan
   image: owasp/zap2docker-stable
-  script:
+  script:  
     - docker run -t owasp/zap2docker-stable zap-baseline.py -t http://your_website_url -r zap_report.html
-  artifacts:
-    paths:
+  artifacts: 
+    paths: 
       - zap_report.html
-      
- 
+
   deploy:
    stage: deploy
-    script:
+    script: 
     - docker-compose up -d
-
-
-
-      
