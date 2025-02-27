@@ -18,8 +18,12 @@
     paths:
       - zap_report.html
       
-    deploy:
-    stage: deploy
-       script:
-      - docker-compose up -d
+ 
+  deploy:
+   stage: deploy
+    script:
+    - docker-compose up -d
+
+
+
       
