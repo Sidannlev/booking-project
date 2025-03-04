@@ -6,23 +6,22 @@ on:
       - main
 
 jobs:
-  security_scan:
-    name: OWASP ZAP Security Scan
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Check out the code
+        uses: actions/checkout@v2
 
-      - name: Run OWASP ZAP Full Scan
-        uses: zaproxy/action-full-scan@v0.8.0
-        with:
-          target: 'http://boking.pp.ua' # Замени на свой реальный URL
-          fail_action: true
-          rules_file_name: '.zap/rules.tsv'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Upload ZAP Report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-report
-          path: report_html.html
+      - name: Build Docker image
+        run: docker build -t my-app .
+
+      - name: Deploy to AWS using Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml up -d
+
+      - name: Run OWASP ZAP vulnerability scan
+        run: |
+          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://your-website-url
