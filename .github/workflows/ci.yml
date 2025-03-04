@@ -4,33 +4,24 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  security_scan:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out the code
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Build Docker image
-        run: |
-          docker build -t my-image .
+        run: docker build -t my-app .
 
-      - name: Run Trivy vulnerability scan
+      - name: Deploy to AWS using Docker Compose
         run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            -v $(pwd):/root/.cache/ aquasec/trivy:latest --exit-code 1 --severity HIGH,CRITICAL my-image
-        continue-on-error: true
+          docker-compose -f docker-compose.yml up -d
 
-      - name: Push Docker image to DockerHub (if no critical issues)
-        if: success()
+      - name: Run OWASP ZAP vulnerability scan
         run: |
-          docker tag my-image eremark/booking-docker:latest
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push eremark/booking-docker:latest
+          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://boking.pp.ua
