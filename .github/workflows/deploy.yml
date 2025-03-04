@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out the code
         uses: actions/checkout@v2
@@ -24,4 +25,12 @@ jobs:
 
       - name: Run OWASP ZAP vulnerability scan
         run: |
-          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://your-website-url
+          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://booking.pp.ua
+
+      - name: Deploy Prometheus and Grafana for monitoring
+        run: |
+          docker-compose -f monitoring/docker-compose.yml up -d
+
+      - name: Monitor system performance
+        run: |
+          docker exec -it prometheus_container_name curl http://localhost:9090/metrics
