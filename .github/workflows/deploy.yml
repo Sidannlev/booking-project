@@ -19,13 +19,21 @@ jobs:
       - name: Build Docker image
         run: docker build -t my-app .
 
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image to DockerHub
+        run: docker tag my-app eremark/booking-website:latest && docker push eremark/booking-website:latest
+
       - name: Deploy to AWS using Docker Compose
         run: |
           docker-compose -f docker-compose.yml up -d
 
       - name: Run OWASP ZAP vulnerability scan
         run: |
-          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://booking.pp.ua
+          docker run --rm -v $(pwd):/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py -t http://booking.pp.ua -r zap_report.html
+        env:
+          ZAP_API_KEY: ${{ secrets.ZAP_API_KEY }}
 
       - name: Deploy Prometheus and Grafana for monitoring
         run: |
@@ -33,4 +41,10 @@ jobs:
 
       - name: Monitor system performance
         run: |
-          docker exec -it prometheus_container_name curl http://localhost:9090/metrics
+          curl http://localhost:9090/metrics || echo "Prometheus metrics endpoint is unavailable"
+
+      - name: Send alert if Prometheus is down
+        run: |
+          if ! curl -s http://localhost:9090/-/ready | grep "Prometheus is Ready"; then
+            echo "Prometheus is down!" | mail -s "Alert: Prometheus Down" ${{ secrets.ALERT_EMAIL }}
+          fi
