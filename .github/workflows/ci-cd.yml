@@ -1,0 +1,35 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Активируем при пуше в основную ветку
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t eremark/booking-website .
+          docker tag eremark/booking-website:latest eremark/booking-website:latest
+
+      - name: Push to DockerHub
+        run: |
+          docker push eremark/booking-website:latest
+
+      - name: Deploy to EC2 (AWS)
+        run: |
+          ssh -i "your-key.pem" ec2-user@your-ec2-ip "docker pull eremark/booking-website:latest && docker run -d -p 80:80 eremark/booking-website"
