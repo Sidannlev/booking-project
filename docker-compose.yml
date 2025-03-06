@@ -13,12 +13,14 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - /home/ec2-user/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /home/ec2-user/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # read-only
     networks:
       - monitoring
     ports:
       - "9090:9090"
     restart: always
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
 
   grafana:
     image: grafana/grafana:latest
