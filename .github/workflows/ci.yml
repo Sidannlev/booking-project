@@ -15,13 +15,35 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker image
-        run: docker build -t my-app .
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Deploy to AWS using Docker Compose
+      - name: Build and push Docker image
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker build -t eremark/booking-docker:latest .
+          docker push eremark/booking-docker:latest
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to AWS EC2 and deploy using Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@boking.pp.ua << 'EOF'
+          docker-compose -f /home/ec2-user/docker-compose.yml pull
+          docker-compose -f /home/ec2-user/docker-compose.yml up -d --force-recreate
+          EOF
+
+  security_scan:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
       - name: Run OWASP ZAP vulnerability scan
         run: |
-          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://boking.pp.ua
+          docker run --rm owasp/zap2docker-stable zap-full-scan.py -t http://boking.pp.ua -r report.html
+      
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v2
+        with:
+          name: zap-report
+          path: report.html
